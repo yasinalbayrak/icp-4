@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+
+    # Backend API
+    api:
+        container_name: api
+        build:
+            context: ./server
+            dockerfile: Dockerfile.dev
+        restart: always # "no", always, on-failure, unless-stopped
+        working_dir: /app
+        volumes:
+            - ./server:/app
+            - /app/node_modules
+        ports:
+            - "5001:5001"
+        environment:
+            MONGO_URI_DEV: mongodb://root:example@mongo-db:27017/idk?authSource=admin
+            MONGO_URI: <PRODUCTION_MONGO_URI>
+            JWT_SECRET: secret
+            PORT: 5001
+        depends_on:
+            - mongo-db
+
+    # MongoDB database
+    mongo-db:
+        container_name: mongo-db
+        build:
+            context: ./mongodb
+            dockerfile: Dockerfile
+        restart: no
+        environment:
+            MONGO_INITDB_DATABASE: idk
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: example
+        ports:
+            - 27017:27017
+    # client
+    client:
+        container_name: client
+        build:
+            context: ./client
+            dockerfile: Dockerfile.dev
+        volumes:
+            - ./client:/app
+            - /app/node_modules
+        environment:
+            SERVER_URL: http://34.23.54.213:5001
+        ports:
+            - "3000:3000"
